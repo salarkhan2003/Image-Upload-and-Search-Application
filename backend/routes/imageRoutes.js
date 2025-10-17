@@ -7,6 +7,7 @@ const {
   getAllImages,
   getImageById,
   getUploadStats,
+  debugImages,
 } = require('../controllers/imageController');
 
 const { uploadSingle, uploadMultiple } = require('../middleware/upload');
@@ -62,5 +63,28 @@ router.get('/images/:id', getImageById);
  * @access  Public
  */
 router.get('/stats', getUploadStats);
+
+/**
+ * @route   GET /api/debug
+ * @desc    Debug endpoint to check stored images
+ * @access  Public
+ */
+router.get('/debug', debugImages);
+
+/**
+ * @route   GET /api/test-search
+ * @desc    Test search without validation
+ * @access  Public
+ */
+router.get('/test-search', (req, res) => {
+  const { q = 'test' } = req.query;
+  
+  res.json({
+    success: true,
+    message: `Test search for: ${q}`,
+    query: q,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 module.exports = router;

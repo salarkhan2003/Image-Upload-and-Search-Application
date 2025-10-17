@@ -1,15 +1,70 @@
-const { PutObjectCommand, GetObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const sharp = require('sharp');
 const { v4: uuidv4 } = require('uuid');
-const { s3Client, S3_CONFIG } = require('../config/aws');
+const fs = require('fs').promises;
+const path = require('path');
 
 // In-memory storage for image metadata (in production, use a database)
 const imageMetadata = new Map();
 
-class ImageService {
+// Metadata file path for persistence
+const METADATA_FILE = path.join(__dirname, '../uploads/metadata.json');
+
+class LocalImageService {
+  constructor() {
+    this.uploadsDir = path.join(__dirname, '../uploads');
+    this.initializeStorage();
+  }
+
   /**
-   * Optimize image before upload
+   * Initialize local storage directory and load existing metadata
+   */
+  async initializeStorage() {
+    try {
+      await fs.mkdir(this.uploadsDir, { recursive: true });
+      console.log('📁 Local storage initialized at:', this.uploadsDir);
+      
+      // Load existing metadata
+      await this.loadMetadata();
+    } catch (error) {
+      console.error('Storage initialization error:', error);
+    }
+  }
+
+  /**
+   * Load metadata from file
+   */
+  async loadMetadata() {
+    try {
+      const data = await fs.readFile(METADATA_FILE, 'utf8');
+      const metadata = JSON.parse(data);
+      
+      // Restore metadata to Map
+      Object.entries(metadata).forEach(([key, value]) => {
+        imageMetadata.set(key, value);
+      });
+      
+      console.log(`📊 Loaded ${imageMetadata.size} images from metadata`);
+    } catch (error) {
+      // File doesn't exist yet - that's okay for first run
+      console.log('📊 No existing metadata found - starting fresh');
+    }
+  }
+
+  /**
+   * Save metadata to file
+   */
+  async saveMetadata() {
+    try {
+      const metadata = Object.fromEntries(imageMetadata);
+      await fs.writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2));
+      console.log(`💾 Saved metadata for ${imageMetadata.size} images`);
+    } catch (error) {
+      console.error('Failed to save metadata:', error);
+    }
+  }
+
+  /**
+   * Optimize image before storage
    */
   async optimizeImage(buffer, mimetype) {
     try {
@@ -42,75 +97,48 @@ class ImageService {
   }
 
   /**
-   * Upload image to S3
+   * Upload image to local storage
    */
   async uploadImage(file, keywords = []) {
     try {
       const fileId = uuidv4();
       const fileExtension = file.mimetype.split('/')[1];
-      const fileName = `images/${fileId}.${fileExtension}`;
+      const fileName = `${fileId}.${fileExtension}`;
+      const filePath = path.join(this.uploadsDir, fileName);
       
       // Optimize image
       const optimizedBuffer = await this.optimizeImage(file.buffer, file.mimetype);
       
-      // Prepare metadata
-      const metadata = {
-        originalName: file.originalname,
-        keywords: keywords.join(','),
-        uploadDate: new Date().toISOString(),
-        fileSize: optimizedBuffer.length.toString(),
-        contentType: file.mimetype,
-      };
+      // Save to local storage
+      await fs.writeFile(filePath, optimizedBuffer);
       
-      // Upload to S3
-      const uploadParams = {
-        Bucket: S3_CONFIG.bucketName,
-        Key: fileName,
-        Body: optimizedBuffer,
-        ContentType: file.mimetype,
-        Metadata: metadata,
-      };
+      // Create image URL (served by Express static middleware)
+      const imageUrl = `http://localhost:${process.env.PORT || 5000}/uploads/${fileName}`;
       
-      await s3Client.send(new PutObjectCommand(uploadParams));
-      
-      // Generate signed URL for viewing
-      const signedUrl = await this.getSignedUrl(fileName);
-      
-      // Store metadata in memory (use database in production)
+      // Store metadata
       const imageData = {
         id: fileId,
         fileName,
         originalName: file.originalname,
         keywords,
-        uploadDate: metadata.uploadDate,
+        uploadDate: new Date().toISOString(),
         fileSize: optimizedBuffer.length,
         contentType: file.mimetype,
-        url: signedUrl,
+        url: imageUrl,
+        filePath,
       };
       
       imageMetadata.set(fileId, imageData);
       
+      // Save metadata to file for persistence
+      await this.saveMetadata();
+      
+      console.log('✅ Image uploaded successfully:', fileName);
+      console.log('📊 Total images in storage:', imageMetadata.size);
       return imageData;
     } catch (error) {
       console.error('Upload error:', error);
-      throw new Error('Failed to upload image to S3');
-    }
-  }
-
-  /**
-   * Get signed URL for image
-   */
-  async getSignedUrl(fileName, expiresIn = 3600) {
-    try {
-      const command = new GetObjectCommand({
-        Bucket: S3_CONFIG.bucketName,
-        Key: fileName,
-      });
-      
-      return await getSignedUrl(s3Client, command, { expiresIn });
-    } catch (error) {
-      console.error('Signed URL error:', error);
-      throw new Error('Failed to generate signed URL');
+      throw new Error('Failed to upload image');
     }
   }
 
@@ -119,18 +147,34 @@ class ImageService {
    */
   async searchImages(query, page = 1, limit = 12) {
     try {
+      console.log(`🔍 Searching for: "${query}" (page ${page}, limit ${limit})`);
+      console.log(`📊 Total images available: ${imageMetadata.size}`);
+      
+      if (!query || query.trim().length === 0) {
+        throw new Error('Search query is required');
+      }
+      
       const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+      console.log(`🔍 Search terms: ${searchTerms.join(', ')}`);
       
       // Filter images based on keywords
       const matchingImages = Array.from(imageMetadata.values()).filter(image => {
         const imageKeywords = image.keywords.map(k => k.toLowerCase());
         const imageName = image.originalName.toLowerCase();
         
-        return searchTerms.some(term => 
+        const matches = searchTerms.some(term => 
           imageKeywords.some(keyword => keyword.includes(term)) ||
           imageName.includes(term)
         );
+        
+        if (matches) {
+          console.log(`✅ Match found: ${image.originalName} (keywords: ${image.keywords.join(', ')})`);
+        }
+        
+        return matches;
       });
+      
+      console.log(`🔍 Found ${matchingImages.length} matching images`);
       
       // Sort by upload date (newest first)
       matchingImages.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
@@ -140,10 +184,7 @@ class ImageService {
       const endIndex = startIndex + limit;
       const paginatedImages = matchingImages.slice(startIndex, endIndex);
       
-      // Refresh signed URLs
-      for (const image of paginatedImages) {
-        image.url = await this.getSignedUrl(image.fileName);
-      }
+      console.log(`📄 Returning ${paginatedImages.length} images for page ${page}`);
       
       return {
         images: paginatedImages,
@@ -168,6 +209,8 @@ class ImageService {
     try {
       const allImages = Array.from(imageMetadata.values());
       
+      console.log(`📊 getAllImages called - Found ${allImages.length} total images`);
+      
       // Sort by upload date (newest first)
       allImages.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
       
@@ -176,10 +219,7 @@ class ImageService {
       const endIndex = startIndex + limit;
       const paginatedImages = allImages.slice(startIndex, endIndex);
       
-      // Refresh signed URLs
-      for (const image of paginatedImages) {
-        image.url = await this.getSignedUrl(image.fileName);
-      }
+      console.log(`📄 Returning ${paginatedImages.length} images for page ${page}`);
       
       return {
         images: paginatedImages,
@@ -207,9 +247,6 @@ class ImageService {
         throw new Error('Image not found');
       }
       
-      // Refresh signed URL
-      image.url = await this.getSignedUrl(image.fileName);
-      
       return image;
     } catch (error) {
       console.error('Get image by ID error:', error);
@@ -218,4 +255,4 @@ class ImageService {
   }
 }
 
-module.exports = new ImageService();
+module.exports = new LocalImageService();

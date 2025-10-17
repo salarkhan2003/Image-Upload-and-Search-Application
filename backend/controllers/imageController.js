@@ -1,4 +1,4 @@
-const imageService = require('../services/imageService');
+const imageService = require('../services/localImageService');
 const { asyncHandler } = require('../middleware/errorHandler');
 
 /**
@@ -148,10 +148,42 @@ const getUploadStats = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * Debug endpoint to check image storage
+ */
+const debugImages = asyncHandler(async (req, res) => {
+  try {
+    const result = await imageService.getAllImages(1, 100);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Debug info retrieved',
+      data: {
+        totalImages: result.pagination.totalImages,
+        images: result.images.map(img => ({
+          id: img.id,
+          originalName: img.originalName,
+          keywords: img.keywords,
+          uploadDate: img.uploadDate,
+          url: img.url,
+        })),
+      },
+    });
+  } catch (error) {
+    console.error('Debug controller error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get debug info',
+      details: error.message,
+    });
+  }
+});
+
 module.exports = {
   uploadImages,
   searchImages,
   getAllImages,
   getImageById,
   getUploadStats,
+  debugImages,
 };

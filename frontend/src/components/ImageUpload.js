@@ -125,28 +125,143 @@ const ImageUpload = ({ onUpload, loading = false, multiple = false }) => {
     };
   }, [selectedFiles]);
 
+  // Professional Styles
+  const dropzoneStyle = {
+    border: `2px dashed ${isDragActive ? '#00F0FF' : 'rgba(192, 192, 192, 0.3)'}`,
+    borderRadius: '12px',
+    padding: '48px 24px',
+    textAlign: 'center',
+    cursor: loading ? 'not-allowed' : 'pointer',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    background: isDragActive 
+      ? 'rgba(0, 240, 255, 0.1)' 
+      : 'rgba(15, 33, 55, 0.6)',
+    backdropFilter: 'blur(20px)',
+    opacity: loading ? 0.5 : 1,
+  };
+
+  const errorBoxStyle = {
+    marginTop: '24px',
+    padding: '20px',
+    background: 'rgba(255, 107, 107, 0.1)',
+    border: '1px solid rgba(255, 107, 107, 0.3)',
+    borderRadius: '12px',
+  };
+
+  const fileGridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+    gap: '16px',
+    marginTop: '24px',
+  };
+
+  const fileCardStyle = {
+    position: 'relative',
+    background: 'rgba(15, 33, 55, 0.8)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    border: '1px solid rgba(192, 192, 192, 0.1)',
+  };
+
+  const keywordInputStyle = {
+    flex: 1,
+    padding: '12px 16px',
+    background: 'rgba(15, 33, 55, 0.6)',
+    border: '1px solid rgba(192, 192, 192, 0.2)',
+    borderRadius: '8px',
+    color: '#FFFFFF',
+    fontSize: '14px',
+    fontFamily: "'Inter', sans-serif",
+    outline: 'none',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  };
+
+  const keywordBadgeStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    background: 'linear-gradient(135deg, #00F0FF 0%, #1E90FF 100%)',
+    color: '#121212',
+    fontSize: '12px',
+    fontWeight: 600,
+    padding: '6px 12px',
+    borderRadius: '8px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  };
+
+  const uploadButtonStyle = {
+    width: '100%',
+    padding: '16px 32px',
+    background: selectedFiles.length === 0 || loading 
+      ? 'rgba(192, 192, 192, 0.3)' 
+      : 'linear-gradient(135deg, #00F0FF 0%, #1E90FF 100%)',
+    color: selectedFiles.length === 0 || loading ? '#C0C0C0' : '#121212',
+    border: 'none',
+    borderRadius: '12px',
+    fontFamily: "'Inter', sans-serif",
+    fontSize: '16px',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    cursor: selectedFiles.length === 0 || loading ? 'not-allowed' : 'pointer',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    marginTop: '32px',
+  };
+
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
       {/* Dropzone */}
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200 ${
-          isDragActive
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-        } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        style={dropzoneStyle}
+        onMouseEnter={(e) => {
+          if (!loading) {
+            e.currentTarget.style.borderColor = '#00F0FF';
+            e.currentTarget.style.background = 'rgba(0, 240, 255, 0.05)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!loading && !isDragActive) {
+            e.currentTarget.style.borderColor = 'rgba(192, 192, 192, 0.3)';
+            e.currentTarget.style.background = 'rgba(15, 33, 55, 0.6)';
+          }
+        }}
       >
         <input {...getInputProps()} />
-        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <Upload size={48} style={{ 
+          color: isDragActive ? '#00F0FF' : '#C0C0C0', 
+          marginBottom: '16px' 
+        }} />
         
         {isDragActive ? (
-          <p className="text-lg text-blue-600 font-medium">Drop the images here...</p>
+          <p style={{
+            fontSize: '20px',
+            color: '#00F0FF',
+            fontWeight: 600,
+            fontFamily: "'Inter', sans-serif",
+          }}>
+            DROP THE IMAGES HERE...
+          </p>
         ) : (
           <div>
-            <p className="text-lg text-gray-600 font-medium mb-2">
-              Drag & drop images here, or click to select
+            <p style={{
+              fontSize: '20px',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              marginBottom: '8px',
+              fontFamily: "'Inter', sans-serif",
+            }}>
+              DRAG & DROP IMAGES HERE, OR CLICK TO SELECT
             </p>
-            <p className="text-sm text-gray-500">
+            <p style={{
+              fontSize: '14px',
+              color: '#C0C0C0',
+              fontFamily: "'Inter', sans-serif",
+            }}>
               Supports: JPEG, PNG, GIF, WebP (max 10MB each)
               {multiple && ' • Multiple files allowed'}
             </p>
@@ -154,48 +269,116 @@ const ImageUpload = ({ onUpload, loading = false, multiple = false }) => {
         )}
       </div>
 
-      {/* Error messages */}
+      {/* Error Messages */}
       {errors.length > 0 && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center mb-2">
-            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
-            <h3 className="text-sm font-medium text-red-800">Upload Errors</h3>
+        <div style={errorBoxStyle}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: '12px',
+          }}>
+            <AlertCircle size={20} style={{ color: '#ff6b6b', marginRight: '8px' }} />
+            <h3 style={{
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#ff6b6b',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontFamily: "'Inter', sans-serif",
+            }}>
+              UPLOAD ERRORS
+            </h3>
           </div>
-          <ul className="text-sm text-red-700 space-y-1">
+          <ul style={{ listStyle: 'none', padding: 0 }}>
             {errors.map((error, index) => (
-              <li key={index}>• {error}</li>
+              <li key={index} style={{
+                fontSize: '14px',
+                color: '#ff9999',
+                marginBottom: '4px',
+                fontFamily: "'Inter', sans-serif",
+              }}>
+                • {error}
+              </li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Selected files preview */}
+      {/* Selected Files Preview */}
       {selectedFiles.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Selected Images ({selectedFiles.length})
+        <div style={{ marginTop: '32px' }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: 700,
+            color: '#FFFFFF',
+            marginBottom: '16px',
+            fontFamily: "'Inter', sans-serif",
+            textTransform: 'uppercase',
+            letterSpacing: '-0.025em',
+          }}>
+            SELECTED IMAGES ({selectedFiles.length})
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div style={fileGridStyle}>
             {selectedFiles.map((fileObj) => (
-              <div key={fileObj.id} className="relative group">
-                <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+              <div key={fileObj.id} style={fileCardStyle}>
+                <div style={{ position: 'relative', aspectRatio: '1', overflow: 'hidden' }}>
                   <img
                     src={fileObj.preview}
                     alt={fileObj.name}
-                    className="w-full h-full object-cover"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
                   />
+                  <button
+                    onClick={() => removeFile(fileObj.id)}
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      background: 'rgba(255, 107, 107, 0.9)',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#ff6b6b';
+                      e.target.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(255, 107, 107, 0.9)';
+                      e.target.style.transform = 'scale(1)';
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => removeFile(fileObj.id)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-                <div className="mt-2">
-                  <p className="text-sm font-medium text-gray-900 truncate" title={fileObj.name}>
+                <div style={{ padding: '12px' }}>
+                  <p style={{
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: '#FFFFFF',
+                    marginBottom: '4px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    fontFamily: "'Inter', sans-serif",
+                  }} title={fileObj.name}>
                     {fileObj.name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p style={{
+                    fontSize: '12px',
+                    color: '#C0C0C0',
+                    fontFamily: "'Inter', sans-serif",
+                  }}>
                     {utils.formatFileSize(fileObj.size)}
                   </p>
                 </div>
@@ -205,74 +388,133 @@ const ImageUpload = ({ onUpload, loading = false, multiple = false }) => {
         </div>
       )}
 
-      {/* Keywords input */}
-      <div className="mt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Keywords (Optional)
+      {/* Keywords Input */}
+      <div style={{ marginTop: '32px' }}>
+        <label style={{
+          display: 'block',
+          fontSize: '14px',
+          fontWeight: 600,
+          color: '#FFFFFF',
+          marginBottom: '12px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          fontFamily: "'Inter', sans-serif",
+        }}>
+          KEYWORDS (OPTIONAL)
         </label>
-        <div className="flex flex-wrap gap-2 mb-3">
+        
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '8px',
+          marginBottom: '16px',
+        }}>
           {keywords.map((keyword, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
-            >
-              <Tag className="h-3 w-3 mr-1" />
+            <span key={index} style={keywordBadgeStyle}>
+              <Tag size={14} style={{ marginRight: '6px' }} />
               {keyword}
               <button
                 onClick={() => removeKeyword(keyword)}
-                className="ml-2 text-blue-600 hover:text-blue-800"
+                style={{
+                  marginLeft: '8px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#121212',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                <X className="h-3 w-3" />
+                <X size={14} />
               </button>
             </span>
           ))}
         </div>
         
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: '12px' }}>
           <input
             type="text"
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             onKeyPress={handleKeywordInputKeyPress}
             placeholder="Add keywords (e.g., nature, sunset, portrait)"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            style={keywordInputStyle}
             maxLength={50}
             disabled={keywords.length >= 10}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#00F0FF';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'rgba(192, 192, 192, 0.2)';
+            }}
           />
           <button
             type="button"
             onClick={addKeyword}
             disabled={!keywordInput.trim() || keywords.length >= 10}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{
+              padding: '12px 16px',
+              background: !keywordInput.trim() || keywords.length >= 10 
+                ? 'rgba(192, 192, 192, 0.2)' 
+                : 'rgba(15, 33, 55, 0.8)',
+              color: !keywordInput.trim() || keywords.length >= 10 ? '#C0C0C0' : '#00F0FF',
+              border: '1px solid rgba(192, 192, 192, 0.2)',
+              borderRadius: '8px',
+              cursor: !keywordInput.trim() || keywords.length >= 10 ? 'not-allowed' : 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
           >
-            <Plus className="h-4 w-4" />
+            <Plus size={16} />
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-1">
+        <p style={{
+          fontSize: '12px',
+          color: '#C0C0C0',
+          marginTop: '8px',
+          fontFamily: "'Inter', sans-serif",
+        }}>
           Add up to 10 keywords to help others find your images
         </p>
       </div>
 
-      {/* Upload button */}
-      <div className="mt-6">
-        <button
-          onClick={handleUpload}
-          disabled={selectedFiles.length === 0 || loading}
-          className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
-        >
-          {loading ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-              Uploading...
-            </>
-          ) : (
-            <>
-              <CheckCircle className="h-5 w-5 mr-2" />
-              Upload {selectedFiles.length} Image{selectedFiles.length !== 1 ? 's' : ''}
-            </>
-          )}
-        </button>
-      </div>
+      {/* Upload Button */}
+      <button
+        onClick={handleUpload}
+        disabled={selectedFiles.length === 0 || loading}
+        style={uploadButtonStyle}
+        onMouseEnter={(e) => {
+          if (selectedFiles.length > 0 && !loading) {
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 8px 24px rgba(0, 240, 255, 0.4)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (selectedFiles.length > 0 && !loading) {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = 'none';
+          }
+        }}
+      >
+        {loading ? (
+          <>
+            <div style={{
+              width: '20px',
+              height: '20px',
+              border: '2px solid transparent',
+              borderTop: '2px solid #121212',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }}></div>
+            UPLOADING...
+          </>
+        ) : (
+          <>
+            <CheckCircle size={20} />
+            UPLOAD {selectedFiles.length} IMAGE{selectedFiles.length !== 1 ? 'S' : ''}
+          </>
+        )}
+      </button>
     </div>
   );
 };

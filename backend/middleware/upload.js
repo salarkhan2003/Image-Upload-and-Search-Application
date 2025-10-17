@@ -1,5 +1,10 @@
 const multer = require('multer');
-const { S3_CONFIG } = require('../config/aws');
+
+// Configuration from environment variables
+const UPLOAD_CONFIG = {
+  maxFileSize: parseInt(process.env.MAX_FILE_SIZE) || 10485760, // 10MB
+  allowedTypes: (process.env.ALLOWED_FILE_TYPES || 'image/jpeg,image/png,image/gif,image/webp').split(','),
+};
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -7,10 +12,10 @@ const storage = multer.memoryStorage();
 // File filter function
 const fileFilter = (req, file, cb) => {
   // Check file type
-  if (S3_CONFIG.allowedTypes.includes(file.mimetype)) {
+  if (UPLOAD_CONFIG.allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error(`Invalid file type. Allowed types: ${S3_CONFIG.allowedTypes.join(', ')}`), false);
+    cb(new Error(`Invalid file type. Allowed types: ${UPLOAD_CONFIG.allowedTypes.join(', ')}`), false);
   }
 };
 
@@ -18,7 +23,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: S3_CONFIG.maxFileSize, // 10MB
+    fileSize: UPLOAD_CONFIG.maxFileSize, // 10MB
     files: 5, // Maximum 5 files per request
   },
   fileFilter: fileFilter,

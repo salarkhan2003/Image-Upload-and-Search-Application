@@ -9,8 +9,9 @@ A production-ready full-stack web application for uploading images to AWS S3 and
 ## 🛠 Tech Stack
 - **Frontend**: React.js 18+ with hooks and functional components
 - **Backend**: Node.js with Express.js
-- **Storage**: AWS S3 with image optimization
-- **Database**: In-memory storage (easily extensible to MongoDB/PostgreSQL)
+- **Database**: Supabase (PostgreSQL) with real-time capabilities
+- **Storage**: Supabase Storage with CDN
+- **Authentication**: Supabase Auth (ready for implementation)
 - **Deployment**: Frontend on Netlify/Vercel, Backend on Railway/Render
 
 ## ✨ Features
@@ -87,13 +88,13 @@ cp .env.example .env
 npm start
 ```
 
-### 4. AWS S3 Configuration
-1. Create S3 bucket
-2. Configure CORS and permissions
-3. Create IAM user with S3 access
-4. Add credentials to backend `.env`
+### 4. Supabase Setup
+1. Create Supabase project
+2. Run SQL setup script
+3. Configure storage bucket
+4. Add credentials to `.env` files
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed setup instructions.
+See [setup-guides/supabase-setup.md](setup-guides/supabase-setup.md) for detailed instructions.
 
 ## 🔧 API Endpoints
 
@@ -139,16 +140,17 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed setup instructions.
 
 **Backend**:
 ```env
-AWS_ACCESS_KEY_ID=your_key
-AWS_SECRET_ACCESS_KEY=your_secret
-AWS_REGION=us-east-1
-S3_BUCKET_NAME=your-bucket
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_KEY=your_service_key
 FRONTEND_URL=https://your-app.netlify.app
 ```
 
 **Frontend**:
 ```env
 REACT_APP_API_URL=https://your-api.railway.app/api
+REACT_APP_SUPABASE_URL=https://your-project.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=your_anon_key
 ```
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide.

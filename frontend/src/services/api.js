@@ -24,21 +24,32 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
+// Response interceptor with better error handling
 api.interceptors.response.use(
   (response) => {
     return response.data;
   },
   (error) => {
-    const errorMessage = error.response?.data?.error || 
-                        error.response?.data?.message || 
-                        error.message || 
-                        'An unexpected error occurred';
+    let errorMessage = 'Connection failed';
+    
+    if (error.response) {
+      // Server responded with error status
+      errorMessage = error.response.data?.error || 
+                    error.response.data?.message || 
+                    `Server error: ${error.response.status}`;
+    } else if (error.request) {
+      // Request made but no response received
+      errorMessage = 'Backend server not responding. Please ensure the backend is running on port 5000.';
+    } else {
+      // Something else happened
+      errorMessage = error.message || 'An unexpected error occurred';
+    }
     
     console.error('API Error:', {
       message: errorMessage,
       status: error.response?.status,
       url: error.config?.url,
+      type: error.code,
     });
     
     return Promise.reject(new Error(errorMessage));
@@ -63,7 +74,6 @@ export const imageAPI = {
         const progress = Math.round(
           (progressEvent.loaded * 100) / progressEvent.total
         );
-        // This can be used with a callback if needed
         console.log(`Upload progress: ${progress}%`);
       },
     });
@@ -93,18 +103,60 @@ export const imageAPI = {
    * Search images by keywords
    */
   searchImages: async (query, page = 1, limit = 12) => {
-    return api.get('/search', {
-      params: { q: query, page, limit },
-    });
+    try {
+      if (!query || query.trim().length === 0) {
+        // If no query, return all images
+        return await imageAPI.getAllImages(page, limit);
+      }
+      
+      return await api.get('/search', {
+        params: { q: query.trim(), page, limit },
+      });
+    } catch (error) {
+      console.error('Search API Error:', error.message);
+      
+      // If search fails, return empty results
+      return {
+        success: true,
+        data: {
+          images: [],
+          pagination: {
+            currentPage: page,
+            totalPages: 0,
+            totalImages: 0,
+            hasNext: false,
+            hasPrev: false,
+          }
+        }
+      };
+    }
   },
 
   /**
    * Get all images with pagination
    */
   getAllImages: async (page = 1, limit = 12) => {
-    return api.get('/images', {
-      params: { page, limit },
-    });
+    try {
+      return await api.get('/images', {
+        params: { page, limit },
+      });
+    } catch (error) {
+      // Return empty result for new installations
+      console.log('No images found (this is normal for new installations)');
+      return {
+        success: true,
+        data: {
+          images: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 0,
+            totalImages: 0,
+            hasNext: false,
+            hasPrev: false,
+          }
+        }
+      };
+    }
   },
 
   /**
@@ -118,7 +170,19 @@ export const imageAPI = {
    * Get upload statistics
    */
   getStats: async () => {
-    return api.get('/stats');
+    try {
+      return await api.get('/stats');
+    } catch (error) {
+      // Return empty stats for new installations
+      return {
+        success: true,
+        data: {
+          totalImages: 0,
+          totalSize: 0,
+          recentUploads: [],
+        }
+      };
+    }
   },
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { utils } from '../services/api';
 
@@ -48,7 +48,6 @@ const SearchBar = ({ onSearch, initialQuery = '', placeholder = "Search images b
   const clearSearch = () => {
     setQuery('');
     setShowSuggestions(false);
-    // Optionally trigger a search with empty query to show all images
     onSearch('');
   };
 
@@ -57,49 +56,168 @@ const SearchBar = ({ onSearch, initialQuery = '', placeholder = "Search images b
     suggestion.toLowerCase() !== query.toLowerCase()
   ).slice(0, 6);
 
+  const searchBarStyle = {
+    position: 'relative',
+    width: '100%',
+    maxWidth: '800px',
+    margin: '0 auto',
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '20px 60px 20px 60px',
+    background: 'rgba(15, 33, 55, 0.8)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(192, 192, 192, 0.2)',
+    borderRadius: '12px',
+    color: '#FFFFFF',
+    fontSize: '18px',
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 400,
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    outline: 'none',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+  };
+
+  const iconStyle = {
+    position: 'absolute',
+    left: '20px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#00F0FF',
+    pointerEvents: 'none',
+  };
+
+  const clearButtonStyle = {
+    position: 'absolute',
+    right: '20px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'transparent',
+    border: 'none',
+    color: '#C0C0C0',
+    cursor: 'pointer',
+    padding: '8px',
+    borderRadius: '8px',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  };
+
+  const suggestionsStyle = {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: '8px',
+    background: 'rgba(15, 33, 55, 0.95)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(192, 192, 192, 0.2)',
+    borderRadius: '12px',
+    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.3)',
+    zIndex: 50,
+    maxHeight: '320px',
+    overflowY: 'auto',
+  };
+
+  const suggestionItemStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '16px 20px',
+    color: '#C0C0C0',
+    cursor: 'pointer',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    borderBottom: '1px solid rgba(192, 192, 192, 0.1)',
+    fontSize: '16px',
+    fontFamily: "'Inter', sans-serif",
+  };
+
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="relative">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+    <div style={searchBarStyle} className="animate-slide-up">
+      <form onSubmit={handleSubmit} style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={24} style={iconStyle} />
           <input
             type="text"
             value={query}
             onChange={handleInputChange}
-            onFocus={() => setShowSuggestions(true)}
+            onFocus={() => {
+              setShowSuggestions(true);
+            }}
             onBlur={() => {
-              // Delay hiding suggestions to allow clicking on them
               setTimeout(() => setShowSuggestions(false), 200);
             }}
             placeholder={placeholder}
-            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 text-gray-900 placeholder-gray-500"
+            style={inputStyle}
+            onMouseEnter={(e) => {
+              e.target.style.borderColor = '#00F0FF';
+              e.target.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 240, 255, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              if (document.activeElement !== e.target) {
+                e.target.style.borderColor = 'rgba(192, 192, 192, 0.2)';
+                e.target.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2)';
+              }
+            }}
+
           />
           {query && (
             <button
               type="button"
               onClick={clearSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              style={clearButtonStyle}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#FFFFFF';
+                e.target.style.background = 'rgba(192, 192, 192, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = '#C0C0C0';
+                e.target.style.background = 'transparent';
+              }}
             >
-              <X className="h-5 w-5" />
+              <X size={20} />
             </button>
           )}
         </div>
 
-        {/* Search button for mobile */}
+        {/* Mobile Search Button */}
         <button
           type="submit"
-          className="md:hidden mt-3 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          style={{
+            display: 'none',
+            width: '100%',
+            marginTop: '16px',
+            padding: '16px 32px',
+            background: 'linear-gradient(135deg, #00F0FF 0%, #1E90FF 100%)',
+            color: '#121212',
+            border: 'none',
+            borderRadius: '12px',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '16px',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            cursor: 'pointer',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          className="md:hidden"
         >
-          Search Images
+          SEARCH IMAGES
         </button>
       </form>
 
-      {/* Search suggestions */}
+      {/* Search Suggestions */}
       {showSuggestions && (query.length > 0 || filteredSuggestions.length > 0) && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+        <div style={suggestionsStyle} className="animate-scale-in">
           {query.length > 0 && (
-            <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
-              Search suggestions
+            <div style={{
+              padding: '16px 20px',
+              fontSize: '14px',
+              color: '#00F0FF',
+              borderBottom: '1px solid rgba(192, 192, 192, 0.1)',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}>
+              SEARCH SUGGESTIONS
             </div>
           )}
           
@@ -109,16 +227,26 @@ const SearchBar = ({ onSearch, initialQuery = '', placeholder = "Search images b
                 key={index}
                 type="button"
                 onClick={() => handleSuggestionClick(suggestion)}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 border-b border-gray-50 last:border-b-0"
+                style={suggestionItemStyle}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(192, 192, 192, 0.1)';
+                  e.target.style.color = '#FFFFFF';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'transparent';
+                  e.target.style.color = '#C0C0C0';
+                }}
               >
-                <div className="flex items-center">
-                  <Search className="h-4 w-4 text-gray-400 mr-3" />
-                  <span>{suggestion}</span>
-                </div>
+                <Search size={18} style={{ color: '#00F0FF', marginRight: '12px' }} />
+                <span>{suggestion}</span>
               </button>
             ))
           ) : query.length > 0 && (
-            <div className="px-4 py-3 text-sm text-gray-500">
+            <div style={{
+              padding: '16px 20px',
+              fontSize: '14px',
+              color: '#C0C0C0',
+            }}>
               No suggestions found
             </div>
           )}
