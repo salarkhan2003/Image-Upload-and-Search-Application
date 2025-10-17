@@ -2,7 +2,11 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL || (
+    process.env.NODE_ENV === 'production' 
+      ? '/api' 
+      : 'http://localhost:5000/api'
+  ),
   timeout: 30000, // 30 seconds timeout
   headers: {
     'Content-Type': 'application/json',
@@ -109,26 +113,14 @@ export const imageAPI = {
         return await imageAPI.getAllImages(page, limit);
       }
       
-      return await api.get('/search', {
+      const response = await api.get('/search', {
         params: { q: query.trim(), page, limit },
       });
+      
+      return response;
     } catch (error) {
       console.error('Search API Error:', error.message);
-      
-      // If search fails, return empty results
-      return {
-        success: true,
-        data: {
-          images: [],
-          pagination: {
-            currentPage: page,
-            totalPages: 0,
-            totalImages: 0,
-            hasNext: false,
-            hasPrev: false,
-          }
-        }
-      };
+      throw error; // Re-throw the error so it can be handled by the component
     }
   },
 

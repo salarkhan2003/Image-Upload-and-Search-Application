@@ -72,6 +72,20 @@ router.get('/stats', getUploadStats);
 router.get('/debug', debugImages);
 
 /**
+ * @route   GET /api/test
+ * @desc    Test endpoint
+ * @access  Public
+ */
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API is working!',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
+
+/**
  * @route   GET /api/test-search
  * @desc    Test search without validation
  * @access  Public

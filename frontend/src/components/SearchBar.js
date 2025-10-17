@@ -16,7 +16,7 @@ const SearchBar = ({ onSearch, initialQuery = '', placeholder = "Search images b
     if (searchQuery.trim()) {
       onSearch(searchQuery.trim());
     }
-  }, 500);
+  }, 800); // Increased debounce time
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -26,9 +26,10 @@ const SearchBar = ({ onSearch, initialQuery = '', placeholder = "Search images b
     const value = e.target.value;
     setQuery(value);
     
-    if (value.trim()) {
-      debouncedSearch(value);
-    }
+    // Don't trigger search on every keystroke, only on form submit
+    // if (value.trim()) {
+    //   debouncedSearch(value);
+    // }
   };
 
   const handleSubmit = (e) => {

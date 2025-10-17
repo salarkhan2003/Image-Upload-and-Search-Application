@@ -14,7 +14,6 @@ const HomePage = () => {
     loading,
     setImages,
     setLoading,
-    setError,
   } = useImageContext();
 
   const [stats, setStats] = useState({

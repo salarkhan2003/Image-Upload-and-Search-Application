@@ -11,7 +11,7 @@ const uploadSchema = Joi.object({
 });
 
 const searchSchema = Joi.object({
-  q: Joi.string().trim().min(1).max(200).required(),
+  q: Joi.string().trim().max(200).optional().allow('').default(''),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(50).default(12),
 });
@@ -49,32 +49,34 @@ const validateUpload = (req, res, next) => {
 };
 
 const validateSearch = (req, res, next) => {
-  const { error, value } = searchSchema.validate(req.query);
+  // Set defaults for missing parameters
+  const queryData = {
+    q: req.query.q || '',
+    page: parseInt(req.query.page) || 1,
+    limit: parseInt(req.query.limit) || 12,
+  };
   
-  if (error) {
-    return res.status(400).json({
-      success: false,
-      error: 'Validation error',
-      details: error.details[0].message,
-    });
-  }
+  // Simple validation without Joi for search
+  if (queryData.page < 1) queryData.page = 1;
+  if (queryData.limit < 1 || queryData.limit > 50) queryData.limit = 12;
+  if (typeof queryData.q !== 'string') queryData.q = '';
   
-  req.validatedData = value;
+  req.validatedData = queryData;
   next();
 };
 
 const validatePagination = (req, res, next) => {
-  const { error, value } = paginationSchema.validate(req.query);
+  // Set defaults for missing parameters
+  const queryData = {
+    page: parseInt(req.query.page) || 1,
+    limit: parseInt(req.query.limit) || 12,
+  };
   
-  if (error) {
-    return res.status(400).json({
-      success: false,
-      error: 'Validation error',
-      details: error.details[0].message,
-    });
-  }
+  // Simple validation
+  if (queryData.page < 1) queryData.page = 1;
+  if (queryData.limit < 1 || queryData.limit > 50) queryData.limit = 12;
   
-  req.validatedData = value;
+  req.validatedData = queryData;
   next();
 };
 

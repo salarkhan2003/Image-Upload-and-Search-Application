@@ -36,11 +36,6 @@ const SearchPage = () => {
   }, [currentQuery, currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const performSearch = async (query, page = 1) => {
-    if (!query.trim()) {
-      loadAllImages(page);
-      return;
-    }
-
     try {
       setLoading(true);
       console.log(`🔍 Frontend: Searching for "${query}"`);
@@ -57,8 +52,15 @@ const SearchPage = () => {
         hasPrev: false,
       });
       
-      if (response.data.images && response.data.images.length === 0) {
-        toast.info(`No images found for "${query}". Try different keywords.`);
+      if (query && query.trim() && response.data.images && response.data.images.length === 0) {
+        toast(`No images found for "${query}". Try different keywords.`, {
+          icon: 'ℹ️',
+          style: {
+            background: 'rgba(15, 33, 55, 0.95)',
+            color: '#FFFFFF',
+            border: '1px solid rgba(192, 192, 192, 0.2)',
+          },
+        });
       }
     } catch (error) {
       console.error('Search error:', error);

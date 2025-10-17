@@ -1,4 +1,7 @@
-const imageService = require('../services/localImageService');
+// Use different service based on environment
+const imageService = process.env.NODE_ENV === 'production' 
+  ? require('../services/vercelImageService')
+  : require('../services/localImageService');
 const { asyncHandler } = require('../middleware/errorHandler');
 
 /**
