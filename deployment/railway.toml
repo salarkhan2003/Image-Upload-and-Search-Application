@@ -1,0 +1,29 @@
+# Railway configuration for Node.js backend
+
+[build]
+# Build command (optional, Railway auto-detects)
+buildCommand = "npm install"
+
+[deploy]
+# Start command
+startCommand = "npm start"
+
+# Health check endpoint
+healthcheckPath = "/health"
+
+# Timeout for health check
+healthcheckTimeout = 30
+
+# Restart policy
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[env]
+# Environment variables (set these in Railway dashboard)
+# PORT will be automatically set by Railway
+# NODE_ENV = "production"
+# AWS_ACCESS_KEY_ID = "your_aws_access_key"
+# AWS_SECRET_ACCESS_KEY = "your_aws_secret_key"
+# AWS_REGION = "us-east-1"
+# S3_BUCKET_NAME = "your-bucket-name"
+# FRONTEND_URL = "https://your-frontend-domain.com"
